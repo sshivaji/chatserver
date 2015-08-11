@@ -20,6 +20,9 @@ import tornado.ioloop
 import tornado.web
 import os.path
 import uuid
+import datetime
+import pytz
+
 
 from tornado.concurrent import Future
 from tornado import gen
@@ -74,7 +77,7 @@ global_message_buffer = MessageBuffer()
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.render("index.html", messages=global_message_buffer.cache)
+        self.render("index.html", messages=global_message_buffer.cache[::-1])
 
 
 class MessageNewHandler(tornado.web.RequestHandler):
@@ -85,6 +88,12 @@ class MessageNewHandler(tornado.web.RequestHandler):
         }
         # to_basestring is necessary for Python 3's json encoder,
         # which doesn't accept byte strings.
+
+        d = datetime.datetime.now(tz=pytz.utc)
+        d = d.astimezone(pytz.timezone('Asia/Tokyo'))
+        # put timezone as a startup param
+
+        message["date"] = d.strftime('%Y-%m-%d %H:%M:%S')
         message["html"] = tornado.escape.to_basestring(
             self.render_string("message.html", message=message))
         if self.get_argument("next", None):
